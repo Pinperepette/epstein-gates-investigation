@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parrhesepstein - Rapporti Epstein-Gates-Summers</title>
+    <meta name="description" content="Analisi investigativa AI dei rapporti tra Jeffrey Epstein, Bill Gates e Larry Summers basata sui documenti declassificati del DOJ.">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #06060b;
+            --bg-secondary: #0c0c14;
+            --bg-card: #111119;
+            --bg-card-hover: #16161f;
+            --border: #1e1e30;
+            --border-light: #2a2a42;
+            --text-primary: #eaeaf2;
+            --text-secondary: #8888a4;
+            --text-muted: #555570;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --green: #10b981;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --cyan: #06b6d4;
+            --pink: #ec4899;
+            --shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            background: rgba(6,6,11,0.88); backdrop-filter: blur(24px) saturate(180%);
+            border-bottom: 1px solid var(--border); padding: 0 1.5rem;
+        }
+        .nav-inner {
+            max-width: 1400px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between; height: 56px;
+        }
+        .logo { font-weight: 900; font-size: 0.95rem; letter-spacing: -0.5px; color: var(--red); }
+        .nav-links { display: flex; gap: 0.25rem; list-style: none; overflow-x: auto; }
+        .nav-links a {
+            color: var(--text-muted); text-decoration: none; font-size: 0.75rem; font-weight: 600;
+            padding: 0.35rem 0.65rem; border-radius: 6px; transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-links a:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+        .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 4px; }
+        .hamburger span { width: 20px; height: 2px; background: var(--text-primary); }
+
+        /* ===== HERO ===== */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            padding: 5rem 1.5rem 4rem; position: relative;
+        }
+        .hero::before {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(239,68,68,0.06) 0%, transparent 60%),
+                        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(59,130,246,0.04) 0%, transparent 50%);
+        }
+        .hero-content { position: relative; z-index: 1; max-width: 860px; }
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.4rem 1rem; background: rgba(239,68,68,0.08);
+            border: 1px solid rgba(239,68,68,0.15); border-radius: 99px;
+            font-size: 0.7rem; font-weight: 700; color: var(--red);
+            text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 1.5rem;
+        }
+        .hero h1 {
+            font-size: clamp(2rem, 4.5vw, 3.5rem); font-weight: 900;
+            letter-spacing: -1.5px; line-height: 1.08; margin-bottom: 1.2rem;
+        }
+        .hero h1 .hl { color: var(--red); }
+        .hero .subtitle {
+            font-size: 1.05rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2.5rem;
+        }
+        .stats-row { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+        .stat { text-align: center; }
+        .stat-num {
+            font-size: 2.2rem; font-weight: 900; font-family: 'JetBrains Mono', monospace; line-height: 1;
+        }
+        .stat-label { font-size: 0.68rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.2rem; }
+        .scroll-hint {
+            position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+            animation: float 3s ease-in-out infinite; color: var(--text-muted); font-size: 0.7rem;
+        }
+        @keyframes float { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-6px)} }
+
+        /* ===== SECTIONS ===== */
+        section { padding: 4.5rem 1.5rem; max-width: 1400px; margin: 0 auto; }
+        .sec-head { text-align: center; margin-bottom: 2.5rem; }
+        .sec-head h2 { font-size: clamp(1.4rem, 2.5vw, 2rem); font-weight: 800; letter-spacing: -0.5px; }
+        .sec-head p { color: var(--text-secondary); font-size: 0.9rem; max-width: 550px; margin: 0.5rem auto 0; }
+        .divider { width: 50px; height: 2px; border-radius: 1px; margin: 0.8rem auto; }
+
+        /* ===== CARDS ===== */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.25rem; transition: all 0.25s;
+        }
+        .card:hover { background: var(--bg-card-hover); border-color: var(--border-light); transform: translateY(-1px); }
+
+        /* ===== CHARTS ===== */
+        .charts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+        .chart-card {
+            background: var(--bg-card); border: 1px solid var(--border);
+            border-radius: 12px; padding: 1.25rem;
+        }
+        .chart-card.span2 { grid-column: 1 / -1; }
+        .chart-card h3 { font-size: 0.9rem; font-weight: 700; }
+        .chart-sub { font-size: 0.72rem; color: var(--text-muted); margin-bottom: 0.8rem; }
+        .chart-card canvas { max-height: 250px; }
+        .chart-card.span2 canvas { max-height: 220px; }
+
+        /* Search bars */
+        .sbar-row { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; }
+        .sbar-label { font-size: 0.7rem; font-family: 'JetBrains Mono',monospace; color: var(--text-secondary); width: 150px; text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .sbar-track { flex: 1; height: 18px; background: rgba(255,255,255,0.03); border-radius: 3px; overflow: hidden; }
+        .sbar-fill { height: 100%; border-radius: 3px; transition: width 1.2s cubic-bezier(.16,1,.3,1); }
+        .sbar-val { font-size: 0.68rem; font-family: 'JetBrains Mono',monospace; color: var(--text-muted); width: 55px; flex-shrink: 0; }
+
+        /* ===== NETWORK ===== */
+        #netbox { width: 100%; border-radius: 10px; background: radial-gradient(ellipse at center, #0f0f1a 0%, #06060b 100%); overflow: hidden; }
+        #netbox svg { width: 100%; height: 100%; display: block; }
+        #netbox .node-label { fill: #e0e0f0; font-family: 'Inter', sans-serif; pointer-events: none; text-anchor: middle; dominant-baseline: central; }
+        #netbox .link { stroke-opacity: 0.25; }
+        #netbox .link.dimmed { stroke-opacity: 0.04; }
+        #netbox .node.dimmed circle { opacity: 0.12; }
+        #netbox .node.dimmed text { opacity: 0.08; }
+
+        /* ===== PEOPLE ===== */
+        .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.8rem; }
+        .pcard { display: flex; gap: 0.8rem; }
+        .pavatar {
+            width: 40px; height: 40px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .pavatar.alta { background: rgba(239,68,68,0.12); color: var(--red); }
+        .pavatar.media { background: rgba(245,158,11,0.12); color: var(--orange); }
+        .pavatar.bassa { background: rgba(16,185,129,0.12); color: var(--green); }
+        .pinfo h4 { font-size: 0.85rem; font-weight: 700; line-height: 1.2; }
+        .pinfo .role { font-size: 0.75rem; color: var(--text-secondary); line-height: 1.4; margin-top: 0.1rem; }
+        .rbadge { font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; padding: 0.12rem 0.45rem; border-radius: 4px; display: inline-block; margin-top: 0.25rem; }
+        .rbadge.alta { background: rgba(239,68,68,0.12); color: var(--red); }
+        .rbadge.media { background: rgba(245,158,11,0.12); color: var(--orange); }
+        .rbadge.bassa { background: rgba(16,185,129,0.12); color: var(--green); }
+        .efta-link {
+            font-size: 0.68rem; font-family: 'JetBrains Mono',monospace;
+            color: var(--cyan); text-decoration: none; margin-top: 0.2rem; display: inline-block;
+        }
+        .efta-link:hover { text-decoration: underline; }
+
+        /* Tabs */
+        .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.2rem; flex-wrap: wrap; justify-content: center; }
+        .tbtn {
+            padding: 0.4rem 1rem; border: 1px solid var(--border); border-radius: 6px;
+            background: transparent; color: var(--text-muted); cursor: pointer;
+            font-size: 0.75rem; font-weight: 600; font-family: 'Inter',sans-serif; transition: all 0.2s;
+        }
+        .tbtn:hover { color: var(--text-secondary); background: rgba(255,255,255,0.03); }
+        .tbtn.active { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.2); color: var(--red); }
+
+        /* ===== EVIDENCE ===== */
+        .elist { display: flex; flex-direction: column; gap: 0.8rem; }
+        .eitem { display: flex; gap: 1rem; }
+        .emark { width: 36px; height: 36px; border-radius: 8px; background: rgba(59,130,246,0.08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem; }
+        .econtent .eid { font-family: 'JetBrains Mono',monospace; font-size: 0.75rem; font-weight: 600; }
+        .econtent .eid a { color: var(--cyan); text-decoration: none; }
+        .econtent .eid a:hover { text-decoration: underline; }
+        .econtent .equote {
+            font-size: 0.82rem; color: var(--text-secondary); margin-top: 0.2rem;
+            font-style: italic; border-left: 2px solid var(--border); padding-left: 0.8rem;
+        }
+        .econtent .eimp { font-size: 0.78rem; color: var(--text-primary); margin-top: 0.3rem; }
+
+        /* ===== TIMELINE ===== */
+        .tl { position: relative; padding-left: 1.5rem; }
+        .tl::before { content:''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom,var(--red),var(--blue),var(--purple)); }
+        .tl-item { position: relative; padding: 0 0 1.5rem 1.2rem; }
+        .tl-item::before { content:''; position: absolute; left: -1.5rem; top: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--red); margin-left: -3px; }
+        .tl-date { font-family: 'JetBrains Mono',monospace; font-size: 0.7rem; color: var(--orange); font-weight: 600; }
+        .tl-event { font-size: 0.82rem; margin-top: 0.15rem; }
+        .tl-src { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .tl-src a { color: var(--cyan); text-decoration: none; }
+        .tl-src a:hover { text-decoration: underline; }
+
+        /* ===== BANKING ===== */
+        .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 0.8rem; }
+        .txn-amount { font-family: 'JetBrains Mono',monospace; font-size: 1.2rem; font-weight: 700; color: var(--red); }
+        .txn-entities { font-size: 0.8rem; color: var(--text-secondary); margin: 0.4rem 0; }
+        .txn-entities strong { color: var(--text-primary); }
+        .susp-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(239,68,68,0.1); color: var(--red); }
+
+        /* ===== RED FLAGS ===== */
+        .rfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 0.8rem; }
+        .rfitem { display: flex; gap: 0.8rem; align-items: flex-start; }
+        .sev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.45rem; }
+        .sev-dot.alta { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+        .sev-dot.media { background: var(--orange); box-shadow: 0 0 6px rgba(245,158,11,0.4); }
+        .rf-text { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+        .rf-ev { font-size: 0.68rem; font-family: 'JetBrains Mono',monospace; color: var(--cyan); margin-top: 0.15rem; }
+
+        /* ===== PATTERNS ===== */
+        .patgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 0.6rem; }
+        .pat-item { display: flex; gap: 0.7rem; padding: 0.9rem 1rem; }
+        .pat-ico { font-size: 1rem; flex-shrink: 0; }
+        .pat-text { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ===== QUESTIONS ===== */
+        .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 0.6rem; }
+        .qitem { display: flex; gap: 0.8rem; }
+        .qnum { width: 28px; height: 28px; border-radius: 7px; background: rgba(139,92,246,0.1); color: var(--purple); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
+        .qtext { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ===== INCONSISTENCIES ===== */
+        .inc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 0.6rem; }
+        .inc-item { display: flex; gap: 0.7rem; }
+        .inc-ico { color: var(--orange); font-size: 0.9rem; flex-shrink: 0; margin-top: 0.2rem; }
+        .inc-text { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
+
+        /* ===== MAP ===== */
+        #mapbox, #flightmap { width: 100%; height: 500px; border-radius: 12px; border: 1px solid var(--border); z-index: 1; }
+        .leaflet-popup-content-wrapper { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px; box-shadow: var(--shadow); }
+        .leaflet-popup-tip { background: var(--bg-card); }
+        .leaflet-popup-content { font-family: 'Inter',sans-serif; font-size: 0.8rem; line-height: 1.5; }
+        .leaflet-popup-content strong { color: var(--cyan); }
+        .loc-cloud { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; margin-top: 1.5rem; }
+        .loc-tag {
+            padding: 0.25rem 0.6rem; background: rgba(59,130,246,0.06);
+            border: 1px solid rgba(59,130,246,0.1); border-radius: 5px;
+            font-size: 0.68rem; color: var(--blue); transition: all 0.2s;
+        }
+        .loc-tag:hover { background: rgba(59,130,246,0.12); }
+
+        /* ===== REPORT ===== */
+        .report-box {
+            max-width: 900px; margin: 0 auto; padding: 2rem;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            font-size: 0.88rem; line-height: 1.8;
+        }
+        .report-box h1 { font-size: 1.3rem; color: var(--red); margin: 1.5rem 0 0.5rem; }
+        .report-box h2 { font-size: 1.1rem; color: var(--orange); margin: 1.2rem 0 0.4rem; }
+        .report-box h3 { font-size: 0.95rem; margin: 1rem 0 0.3rem; }
+        .report-box p { color: var(--text-secondary); margin-bottom: 0.6rem; }
+        .report-box strong { color: var(--text-primary); }
+
+        /* ===== FOOTER ===== */
+        footer { text-align: center; padding: 3rem 1.5rem; border-top: 1px solid var(--border); margin-top: 2rem; }
+        footer p { font-size: 0.78rem; color: var(--text-muted); }
+        footer a { color: var(--cyan); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        .disclaimer {
+            max-width: 700px; margin: 0 auto 1.5rem; padding: 1rem;
+            background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.12);
+            border-radius: 10px; font-size: 0.75rem; color: var(--orange); line-height: 1.6;
+        }
+
+        /* ===== ANIMATION ===== */
+        .fi { opacity: 0; transform: translateY(16px); transition: opacity 0.5s, transform 0.5s; }
+        .fi.vis { opacity: 1; transform: translateY(0); }
+
+        /* ===== LOADING ===== */
+        #ld { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 9999; transition: opacity 0.4s; }
+        #ld.off { opacity: 0; pointer-events: none; }
+        .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--red); border-radius: 50%; animation: spin 0.7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== RESPONSIVE ===== */
+        @media(max-width:1024px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .qgrid,.inc-grid { grid-template-columns: 1fr; }
+        }
+        @media(max-width:768px) {
+            .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: rgba(6,6,11,0.96); backdrop-filter: blur(20px); flex-direction: column; padding: 0.8rem; border-bottom: 1px solid var(--border); }
+            .nav-links.open { display: flex; }
+            .hamburger { display: flex; }
+            .pgrid,.bgrid,.rfgrid,.patgrid { grid-template-columns: 1fr; }
+            section { padding: 3rem 1rem; }
+            #netbox { max-height: 350px; }
+            .sbar-label { width: 100px; font-size: 0.62rem; }
+            .stats-row { gap: 1rem; }
+            .stat-num { font-size: 1.6rem; }
+        }
+        @media(max-width:480px) {
+            .hero h1 { font-size: 1.7rem; }
+            .stats-row { flex-direction: column; align-items: center; }
+        }
+    </style>
+</head>
+<body>
+    <div id="ld"><div class="spinner"></div></div>
+
+    <nav>
+        <div class="nav-inner">
+            <span class="logo">PARRHESEPSTEIN</span>
+            <div class="hamburger" onclick="document.querySelector('.nav-links').classList.toggle('open')"><span></span><span></span><span></span></div>
+            <ul class="nav-links">
+                <li><a href="#dashboard">Dashboard</a></li>
+                <li><a href="#locations">Localita</a></li>
+                <li><a href="#health">Salute</a></li>
+                <li><a href="#report">Report</a></li>
+                <li><a href="#flights">Voli</a></li>
+                <li><a href="#people">Persone</a></li>
+                <li><a href="#network">Network</a></li>
+                <li><a href="#evidence">Prove</a></li>
+                <li><a href="#timeline">Timeline</a></li>
+                <li><a href="#redflags">Red Flags</a></li>
+                <li><a href="#patterns">Pattern</a></li>
+                <li><a href="#questions">Domande</a></li>
+                <li><a href="#valutazione">Valutazione</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-content">
+            <div class="badge">Report Investigativo Multi-Agente AI</div>
+            <h1>La Rete <span class="hl">Epstein&ndash;Gates&ndash;Summers</span></h1>
+            <p class="subtitle">Analisi investigativa basata su 335 documenti declassificati dal Dipartimento di Giustizia USA. 6 agenti AI specializzati. 135 documenti fonte citati con link diretti ai PDF originali.</p>
+            <div class="stats-row" id="heroStats"></div>
+        </div>
+        <div class="scroll-hint">&#8595; scorri per esplorare</div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="fi">
+        <div class="sec-head">
+            <h2>Dashboard Analisi</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--red),var(--orange))"></div>
+            <p>Panoramica visuale dei risultati dell'investigazione</p>
+        </div>
+        <div class="charts-grid">
+            <div class="chart-card span2">
+                <h3>Risultati Ricerca per Termine</h3>
+                <div class="chart-sub">Numero di documenti trovati nel database DOJ per ciascun termine</div>
+                <div id="searchBars"></div>
+            </div>
+            <div class="chart-card">
+                <h3>Persone per Rilevanza</h3>
+                <div class="chart-sub">Distribuzione per livello di importanza</div>
+                <canvas id="chRelevance"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Red Flags per Severita</h3>
+                <div class="chart-sub">Distribuzione per livello di gravita</div>
+                <canvas id="chSeverity"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Tipologie Connessioni</h3>
+                <div class="chart-sub">Categorie di relazioni identificate</div>
+                <canvas id="chConnTypes"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Distribuzione Eventi per Anno</h3>
+                <div class="chart-sub">Concentrazione temporale degli eventi chiave</div>
+                <canvas id="chYears"></canvas>
+            </div>
+            <div class="chart-card span2">
+                <h3>Flussi Finanziari Documentati</h3>
+                <div class="chart-sub">Importi verificati dai documenti DOJ con link alle fonti</div>
+                <div id="finFlows"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LOCATIONS -->
+    <section id="locations" class="fi">
+        <div class="sec-head">
+            <h2>Localita Coinvolte</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--blue),var(--cyan))"></div>
+            <p>Luoghi menzionati nei documenti analizzati</p>
+        </div>
+        <div id="mapbox"></div>
+        <div class="loc-cloud" id="locCloud"></div>
+    </section>
+
+    <!-- HEALTH CONNECTIONS -->
+    <section id="health" class="fi">
+        <div class="sec-head">
+            <h2>Connessioni Sanitarie Globali</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--green),var(--cyan))"></div>
+            <p>I documenti declassificati dal DOJ rivelano una rete sistematica che collega Epstein, Gates Foundation, WHO, GAVI, ICRC e le Nazioni Unite alla preparazione pandemica e alla ricerca su virus</p>
+        </div>
+        <div id="healthKeyFacts"></div>
+        <h3 style="text-align:center;margin:2.5rem 0 1.2rem;color:var(--cyan);font-size:1.1rem;letter-spacing:1px">CATENE DOCUMENTATE</h3>
+        <div class="elist" id="healthList"></div>
+    </section>
+
+    <!-- FULL REPORT -->
+    <section id="report" class="fi">
+        <div class="sec-head">
+            <h2>Report Integrale</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--red),var(--purple))"></div>
+            <p>Testo completo del report investigativo generato dall'analisi multi-agente</p>
+        </div>
+        <div class="report-box" id="reportBox"></div>
+    </section>
+
+    <!-- FLIGHTS -->
+    <section id="flights" class="fi">
+        <div class="sec-head">
+            <h2>Mappa dei Voli</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--orange),var(--red))"></div>
+            <p>1.034 voli registrati sugli aerei privati di Epstein. Le rotte in rosso evidenziano i voli con Larry Summers a bordo.</p>
+        </div>
+        <div id="flightmap"></div>
+        <div id="flightLegend" style="margin-top:1rem;display:flex;gap:1.5rem;justify-content:center;flex-wrap:wrap;font-size:0.75rem;color:var(--text-secondary)"></div>
+    </section>
+
+    <!-- PEOPLE -->
+    <section id="people" class="fi">
+        <div class="sec-head">
+            <h2>Persone Chiave</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--orange),var(--pink))"></div>
+            <p>Individui identificati nell'analisi dei documenti</p>
+        </div>
+        <div class="tabs" id="pTabs"></div>
+        <div class="pgrid" id="pGrid"></div>
+    </section>
+
+    <!-- NETWORK -->
+    <section id="network" class="fi">
+        <div class="sec-head">
+            <h2>Grafo delle Connessioni</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--purple),var(--pink))"></div>
+            <p>Rete interattiva delle relazioni. Trascina, zooma e clicca sui nodi per esplorare.</p>
+        </div>
+        <div class="chart-card" style="position:relative"><div id="netbox"></div></div>
+    </section>
+
+    <!-- EVIDENCE -->
+    <section id="evidence" class="fi">
+        <div class="sec-head">
+            <h2>Prove Significative</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--red),var(--orange))"></div>
+            <p>Evidenze documentali con link diretti ai PDF sul sito del DOJ</p>
+        </div>
+        <div class="elist" id="evList"></div>
+    </section>
+
+    <!-- TIMELINE -->
+    <section id="timeline" class="fi">
+        <div class="sec-head">
+            <h2>Timeline Eventi</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--green),var(--cyan))"></div>
+            <p>Cronologia degli eventi chiave documentati</p>
+        </div>
+        <div class="tl" id="tlList"></div>
+    </section>
+
+    <!-- RED FLAGS -->
+    <section id="redflags" class="fi">
+        <div class="sec-head">
+            <h2>Red Flags</h2>
+            <div class="divider" style="background:var(--red)"></div>
+            <p>Segnali d'allarme identificati nell'analisi</p>
+        </div>
+        <div class="rfgrid" id="rfGrid"></div>
+    </section>
+
+    <!-- PATTERNS -->
+    <section id="patterns" class="fi">
+        <div class="sec-head">
+            <h2>Pattern Identificati</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--purple),var(--blue))"></div>
+            <p>Schemi ricorrenti emersi dall'analisi</p>
+        </div>
+        <div class="patgrid" id="patGrid"></div>
+    </section>
+
+    <!-- QUESTIONS -->
+    <section id="questions" class="fi">
+        <div class="sec-head">
+            <h2>Domande Aperte</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--blue),var(--purple))"></div>
+            <p>Quesiti critici che richiedono ulteriore investigazione</p>
+        </div>
+        <div class="qgrid" id="qGrid"></div>
+    </section>
+
+    <!-- VALUTAZIONE -->
+    <section id="valutazione" class="fi">
+        <div class="sec-head">
+            <h2>Valutazione</h2>
+            <div class="divider" style="background:linear-gradient(90deg,var(--red),var(--orange),var(--red))"></div>
+            <p>Valutazione complessiva dell'affidabilità, impatto e conclusioni dell'indagine</p>
+        </div>
+        <div id="valBox"></div>
+    </section>
+
+    <footer>
+        <div class="disclaimer">
+            Questo report e' stato generato da un sistema AI multi-agente composto da 6 agenti specializzati
+            (ricerca, analisi finanziaria, network, timeline, fact-checking, sintesi) coordinati da un agente supervisore
+            che verifica la coerenza e l'accuratezza dei risultati. L'analisi si basa esclusivamente su 335 documenti pubblici
+            declassificati dal Dipartimento di Giustizia USA. Tutti i 152 codici EFTA citati sono link diretti ai PDF originali
+            su justice.gov, consultabili per verifica indipendente.
+        </div>
+        <p>
+            Autore: <a href="https://x.com/Pinperepette" target="_blank">@Pinperepette</a> &mdash;
+            Generato con <a href="https://github.com/pinperepette/parrhesepstein" target="_blank">Parrhesepstein</a> &mdash;
+            Fonte: <a href="https://www.justice.gov/usao-sdny/jeffrey-epstein-files" target="_blank">U.S. Department of Justice - Epstein Files</a>
+        </p>
+        <p style="margin-top:0.4rem;font-size:0.68rem;">
+            Report: "Investiga sui rapporti con Bill Gates" &mdash; 8 febbraio 2026 &mdash; 335 documenti analizzati &mdash; 152 fonti citate
+        </p>
+    </footer>
+
+    <script src="data.js"></script>
+    <script>
+    const D = REPORT_DATA;
+    const U = EFTA_URLS;
+
+    function eftaUrl(code) {
+        if (!code) return '#';
+        const c = code.replace(/[^A-Za-z0-9]/g, '');
+        if (U[c]) return U[c].replace(/ /g, '%20');
+        return '#';
+    }
+
+    function eftaLink(code) {
+        const codes = (code || '').split(/[,;]/).map(s => s.trim()).filter(Boolean);
+        return codes.map(c => {
+            const url = eftaUrl(c);
+            return `<a href="${url}" target="_blank" class="efta-link" title="Apri PDF su justice.gov">${c}</a>`;
+        }).join(' ');
+    }
+
+    function init() {
+        document.getElementById('ld').classList.add('off');
+        heroStats();
+        searchBars();
+        chartRelevance();
+        chartSeverity();
+        chartConnTypes();
+        chartYears();
+        chartFlows();
+        locations();
+        healthChains();
+        report();
+        flightMap();
+        people();
+        network();
+        evidence();
+        timeline();
+        redflags();
+        patterns();
+        questions();
+        valutazione();
+        // Intersection observer
+        const obs = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); }), {threshold:0.08});
+        document.querySelectorAll('.fi').forEach(el => obs.observe(el));
+        // Mobile nav close
+        document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', () => document.querySelector('.nav-links').classList.remove('open')));
+    }
+
+    function heroStats() {
+        const s = [
+            { n: D.documents_found || 335, l: 'Documenti', c: 'var(--red)' },
+            { n: (D.analysis?.key_people||[]).length, l: 'Persone', c: 'var(--orange)' },
+            { n: (D.analysis?.connections||[]).length, l: 'Connessioni', c: 'var(--blue)' },
+            { n: (D.analysis?.significant_evidence||[]).length, l: 'Prove', c: 'var(--green)' },
+            { n: (D.follow_up?.critical_questions||[]).length, l: 'Domande Aperte', c: 'var(--purple)' },
+            { n: Object.keys(U).length, l: 'Fonti DOJ', c: 'var(--cyan)' }
+        ];
+        document.getElementById('heroStats').innerHTML = s.map(x => `
+            <div class="stat">
+                <div class="stat-num" style="color:${x.c}" data-t="${x.n}">0</div>
+                <div class="stat-label">${x.l}</div>
+            </div>
+        `).join('');
+        // Animate
+        document.querySelectorAll('[data-t]').forEach(el => {
+            const t = +el.dataset.t; let c = 0; const step = Math.max(1, Math.ceil(t/50));
+            const iv = setInterval(() => { c += step; if(c>=t){c=t;clearInterval(iv);} el.textContent=c; }, 35);
+        });
+    }
+
+    function searchBars() {
+        const raw = D.search_stats || [];
+        const parsed = raw.map(s => { const m=s.match(/'([^']+)': (\d+)/); return m?{t:m[1],n:+m[2]}:null; }).filter(Boolean).sort((a,b)=>b.n-a.n);
+        const mx = Math.max(...parsed.map(s=>s.n),1);
+        const colors = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#10b981','#06b6d4','#ec4899','#f97316','#6366f1','#14b8a6','#a855f7','#e11d48','#0ea5e9','#22c55e','#eab308','#d946ef','#f43f5e','#2dd4bf','#818cf8','#fb923c'];
+        document.getElementById('searchBars').innerHTML = parsed.map((s,i) => `
+            <div class="sbar-row">
+                <span class="sbar-label">${s.t}</span>
+                <div class="sbar-track"><div class="sbar-fill" style="width:${s.n/mx*100}%;background:${colors[i%20]}"></div></div>
+                <span class="sbar-val">${s.n.toLocaleString()}</span>
+            </div>
+        `).join('');
+    }
+
+    function chartRelevance() {
+        const p = D.analysis?.key_people || [];
+        const c = {alta:0,media:0,bassa:0};
+        p.forEach(x => c[x.relevance]=(c[x.relevance]||0)+1);
+        new Chart(document.getElementById('chRelevance'), {
+            type:'doughnut',
+            data:{ labels:['Alta','Media','Bassa'], datasets:[{ data:[c.alta,c.media,c.bassa], backgroundColor:['#ef444499','#f59e0b99','#10b98199'], borderColor:['#ef4444','#f59e0b','#10b981'], borderWidth:2, hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#8888a4', padding:12, font:{family:'Inter',size:10} } } }, cutout:'62%' }
+        });
+    }
+
+    function chartSeverity() {
+        const f = D.banking?.red_flags || [];
+        const c = {};
+        f.forEach(x => c[x.severity]=(c[x.severity]||0)+1);
+        new Chart(document.getElementById('chSeverity'), {
+            type:'doughnut',
+            data:{ labels:Object.keys(c).map(k=>k[0].toUpperCase()+k.slice(1)), datasets:[{ data:Object.values(c), backgroundColor:['#ef444499','#f59e0b99','#10b98199'], borderColor:['#ef4444','#f59e0b','#10b981'], borderWidth:2, hoverOffset:6 }] },
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'bottom', labels:{ color:'#8888a4', padding:12, font:{family:'Inter',size:10} } } }, cutout:'62%' }
+        });
+    }
+
+    function chartConnTypes() {
+        const conns = D.analysis?.connections || [];
+        const types = {};
+        conns.forEach(c => { const t=(c.type||'altro').replace(/_/g,' ').substring(0,28); types[t]=(types[t]||0)+1; });
+        const sorted = Object.entries(types).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        const cols = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#10b981','#06b6d4','#ec4899','#f97316'];
+        new Chart(document.getElementById('chConnTypes'), {
+            type:'polarArea',
+            data:{ labels:sorted.map(s=>s[0]), datasets:[{ data:sorted.map(s=>s[1]), backgroundColor:cols.map(c=>c+'55'), borderColor:cols, borderWidth:1 }] },
+            options:{ responsive:true, maintainAspectRatio:false, scales:{ r:{ grid:{color:'#1e1e30'}, ticks:{display:false} } }, plugins:{ legend:{display:false} } }
+        });
+    }
+
+    function chartYears() {
+        const ev = D.analysis?.timeline || [];
+        const yrs = {};
+        ev.forEach(e => { const m=(e.date||'').match(/(20\d{2})/); if(m) yrs[m[1]]=(yrs[m[1]]||0)+1; });
+        const sorted = Object.entries(yrs).sort((a,b)=>a[0]-b[0]);
+        new Chart(document.getElementById('chYears'), {
+            type:'bar',
+            data:{ labels:sorted.map(s=>s[0]), datasets:[{ data:sorted.map(s=>s[1]),
+                backgroundColor:sorted.map((_,i)=>`hsla(${220+i*25},70%,55%,0.6)`),
+                borderColor:sorted.map((_,i)=>`hsl(${220+i*25},70%,55%)`), borderWidth:1, borderRadius:5
+            }] },
+            options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+                scales:{ x:{grid:{color:'#1e1e3020'},ticks:{color:'#8888a4',font:{family:'JetBrains Mono',size:10}}},
+                         y:{grid:{color:'#1e1e3030'},ticks:{color:'#8888a4',font:{family:'JetBrains Mono',size:10}}} } }
+        });
+    }
+
+    function chartFlows() {
+        const flows = [
+            {from:'Bill & Melinda Gates Foundation', to:'IPI (Polio Eradication)', amount:5000000, label:'$5,000,000', doc:'EFTA01087623', desc:'Grant per Polio Eradication and Peace & Health'},
+            {from:'BMGF → IPI', to:'Polio Field Work (Pak/Nigeria/Somalia)', amount:4350000, label:'$4,350,000', doc:'EFTA01087637', desc:'Budget polio: threat assessment, survey, facilitation'},
+            {from:'BMGF', to:'IPI Gen. Operations (2nd grant)', amount:2500000, label:'$2,500,000', doc:'EFTA01947596', desc:'Secondo grant operativo a IPI'},
+            {from:'Microsoft/bgC3', to:'Boris Nikolic (Transition)', amount:3000000, label:'$3,000,000', doc:'EFTA01083266', desc:'Accordo di separazione Nikolic da bgC3/Gates'},
+            {from:'BMGF', to:'IPI (Consulenze professionali)', amount:700000, label:'$700,000', doc:'EFTA01196853', desc:'Consulenze professionali e pandemic preparedness'},
+            {from:'Donazioni politiche', to:'Eagles Party SuperPAC', amount:10200, label:'$10,200', doc:'EFTA02109356', desc:'Via shell corporation anonima'},
+        ];
+        const mx = Math.max(...flows.map(f=>f.amount));
+        const cols = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#10b981','#06b6d4'];
+        document.getElementById('finFlows').innerHTML = flows.map((f,i) => `
+            <div style="margin-bottom:0.6rem">
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.2rem">
+                    <span style="font-size:0.75rem;color:var(--text-secondary)">${f.from} &rarr; ${f.to}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;color:${cols[i%cols.length]}">${f.label}</span>
+                </div>
+                <div class="sbar-track"><div class="sbar-fill" style="width:${f.amount/mx*100}%;background:${cols[i%cols.length]}"></div></div>
+                <div style="display:flex;justify-content:space-between;margin-top:0.15rem">
+                    <span style="font-size:0.68rem;color:var(--text-muted)">${f.desc}</span>
+                    ${eftaLink(f.doc)}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function locations() {
+        const locs = D.analysis?.locations || [];
+        // Tag cloud for all locations
+        document.getElementById('locCloud').innerHTML = locs.map(l => `<span class="loc-tag">${l}</span>`).join('');
+
+        // Geocoded locations
+        const GEO = [
+            {name:"New York", lat:40.7128, lng:-74.006, details:"Epicentro della rete: residenza Epstein, uffici, incontri con Gates e Summers", cat:"hub"},
+            {name:"Park Hyatt, 153 W. 57th St", lat:40.7648, lng:-73.9788, details:"Incontro Gates-Epstein-Pritzker, 8 settembre 2014", cat:"meeting"},
+            {name:"Leon Black's Office, 9 W. 57th St", lat:40.7639, lng:-73.9741, details:"Riunioni Gates-Summers-Black coordinate da Epstein", cat:"meeting"},
+            {name:"Four Seasons, 57 E. 57th St", lat:40.7632, lng:-73.9712, details:"Location per incontri del network Epstein", cat:"meeting"},
+            {name:"JPMorgan Chase HQ, 270 Park Ave", lat:40.7559, lng:-73.9735, details:"Global Health Investment Fund - Panel con Gates Foundation e Jamie Dimon", cat:"finance"},
+            {name:"575 Lexington Ave (Richard Kahn)", lat:40.7579, lng:-73.9709, details:"Ufficio di Richard Kahn, fornitore di intelligence economica", cat:"finance"},
+            {name:"Columbia University, Mailman School", lat:40.8426, lng:-73.9419, details:"Ira B. Lamster - Dept. Health Policy & Management, connesso al network", cat:"health"},
+            {name:"Seattle - Gates Foundation", lat:47.6245, lng:-122.3468, details:"BMGF Campus, 500 5th Ave North - Visita di Epstein 15/07/2011. Centro operativo GAVI, polio eradication, Global Health", cat:"hub"},
+            {name:"Redmond, WA (Microsoft)", lat:47.6740, lng:-122.1215, details:"Sede Microsoft - bgC3 LLC di Nikolic", cat:"tech"},
+            {name:"Washington D.C.", lat:38.9072, lng:-77.0369, details:"Federal Reserve, Treasury, World Bank HQ - Melanie Walker trasferita da Gates Foundation", cat:"hub"},
+            {name:"Arlington, VA", lat:38.8816, lng:-77.0910, details:"Donazioni politiche via shell corporation e SuperPAC", cat:"finance"},
+            {name:"Miami", lat:25.7617, lng:-80.1918, details:"The Chop House Miami, 300 S. Biscayne Blvd - Incontri di lavoro", cat:"meeting"},
+            {name:"Coral Gables, Florida", lat:25.7215, lng:-80.2684, details:"Attivita' in Florida collegate alla rete", cat:"meeting"},
+            {name:"Kazakhstan", lat:48.0196, lng:66.9237, details:"Consulenze economiche Epstein-Summers tramite IPI per il governo kazako", cat:"consulting"},
+            {name:"Vienna, Austria (IPI HQ)", lat:48.2082, lng:16.3738, details:"International Peace Institute HQ - Andrea Pfanzelter. Centro nevralgico per coordinamento Gates-Epstein su polio e pandemic preparedness", cat:"health"},
+            {name:"Ginevra, Svizzera", lat:46.2044, lng:6.1432, details:"'Preparing for Pandemics' - Conferenza IPI set. 2015 con WHO, MSF, Gates Foundation. Sede WHO e GAVI Alliance", cat:"health"},
+            {name:"Strasbourg", lat:48.5734, lng:7.7521, details:"Meeting iniziale Gates-IPI", cat:"meeting"},
+            {name:"Oslo, Norvegia", lat:59.9139, lng:10.7522, details:"Terje Rod-Larsen, presidente IPI - coordinatore progetti polio e pandemic preparedness", cat:"health"},
+            {name:"Mosca", lat:55.7558, lng:37.6173, details:"Open Innovations Forum 2015 - Consulenti russi nel network", cat:"consulting"},
+            {name:"Pechino", lat:39.9042, lng:116.4074, details:"World Bank China - Bert Hofman Country Director", cat:"consulting"},
+            {name:"Ulaanbaatar, Mongolia", lat:47.8864, lng:106.9057, details:"Progetti consulenza economica World Bank tramite Summers-Epstein", cat:"consulting"},
+            {name:"Pakistan", lat:30.3753, lng:69.3451, details:"Epicentro programma polio BMGF-IPI ($4.35M budget). Nasra Hassan operativa. 'Bill Gates personal emissary' negozia con gruppi armati", cat:"health"},
+            {name:"Nigeria", lat:9.082, lng:8.6753, details:"Programma polio eradication BMGF-IPI. Resistenza locale: sospetti su uso campagne sanitarie per intelligence", cat:"health"},
+            {name:"Somalia", lat:5.1521, lng:46.1996, details:"Polio eradication in zona di conflitto - BMGF-IPI field work", cat:"health"},
+            {name:"Afghanistan", lat:33.9391, lng:67.71, details:"Polio eradication in zona di conflitto - BMGF-IPI field work", cat:"health"},
+            {name:"Firenze", lat:43.7696, lng:11.2558, details:"Location europea nel network", cat:"meeting"},
+            {name:"Israele", lat:31.7683, lng:35.2137, details:"Ehud Barak - Intelligence su nomine governative USA e Fed", cat:"intel"},
+        ];
+
+        const map = L.map('mapbox', {
+            scrollWheelZoom: false,
+            zoomControl: true,
+            attributionControl: false
+        }).setView([30, -10], 2);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            maxZoom: 18
+        }).addTo(map);
+
+        const catColors = {
+            hub: {bg:'#ef4444',border:'#fca5a5',sz:16},
+            health: {bg:'#10b981',border:'#6ee7b7',sz:14},
+            finance: {bg:'#f59e0b',border:'#fcd34d',sz:12},
+            meeting: {bg:'#3b82f6',border:'#93c5fd',sz:10},
+            consulting: {bg:'#8b5cf6',border:'#c4b5fd',sz:11},
+            tech: {bg:'#06b6d4',border:'#67e8f9',sz:11},
+            intel: {bg:'#ec4899',border:'#f9a8d4',sz:12},
+        };
+
+        GEO.forEach(g => {
+            const cc = catColors[g.cat] || catColors.meeting;
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="width:${cc.sz}px;height:${cc.sz}px;background:${cc.bg};border:2px solid ${cc.border};border-radius:50%;box-shadow:0 0 8px ${cc.bg}88"></div>`,
+                iconSize: [cc.sz, cc.sz],
+                iconAnchor: [cc.sz/2, cc.sz/2]
+            });
+            L.marker([g.lat, g.lng], { icon })
+                .addTo(map)
+                .bindPopup(`<strong>${g.name}</strong><br>${g.details}<br><span style="color:${cc.bg};font-size:0.7rem;text-transform:uppercase">${g.cat}</span>`);
+        });
+    }
+
+    function people(filter='all') {
+        const p = D.analysis?.key_people || [];
+        // Tabs
+        const counts = {alta:0,media:0,bassa:0};
+        p.forEach(x => counts[x.relevance]=(counts[x.relevance]||0)+1);
+        if(!document.querySelector('#pTabs .tbtn')) {
+            document.getElementById('pTabs').innerHTML = [
+                {f:'all',l:`Tutte (${p.length})`},{f:'alta',l:`Alta (${counts.alta})`},{f:'media',l:`Media (${counts.media})`},{f:'bassa',l:`Bassa (${counts.bassa})`}
+            ].map(t => `<button class="tbtn ${t.f==='all'?'active':''}" data-f="${t.f}">${t.l}</button>`).join('');
+            document.querySelectorAll('#pTabs .tbtn').forEach(b => b.addEventListener('click', () => {
+                document.querySelectorAll('#pTabs .tbtn').forEach(x=>x.classList.remove('active'));
+                b.classList.add('active');
+                people(b.dataset.f);
+            }));
+        }
+        const filtered = filter==='all' ? p : p.filter(x=>x.relevance===filter);
+        document.getElementById('pGrid').innerHTML = filtered.map(x => {
+            const ini = x.name.split(' ').map(w=>w[0]).join('').substring(0,2);
+            return `<div class="card pcard">
+                <div class="pavatar ${x.relevance}">${ini}</div>
+                <div class="pinfo">
+                    <h4>${x.name}</h4>
+                    <p class="role">${x.role}</p>
+                    <span class="rbadge ${x.relevance}">${x.relevance}</span>
+                    <div>${eftaLink(x.evidence_doc)}</div>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    function network() {
+        const nd = D.network_data; if(!nd) return;
+        const container = document.getElementById('netbox');
+        const W = container.clientWidth;
+        const H = Math.min(560, Math.max(400, W * 0.45));
+        container.style.height = H + 'px';
+
+        // Build adjacency
+        const edgeCount = {};
+        const connectedIds = new Set();
+        const neighbors = {};
+        (nd.edges||[]).forEach(e => {
+            edgeCount[e.from] = (edgeCount[e.from]||0) + 1;
+            edgeCount[e.to] = (edgeCount[e.to]||0) + 1;
+            connectedIds.add(e.from);
+            connectedIds.add(e.to);
+            if (!neighbors[e.from]) neighbors[e.from] = new Set();
+            if (!neighbors[e.to]) neighbors[e.to] = new Set();
+            neighbors[e.from].add(e.to);
+            neighbors[e.to].add(e.from);
+        });
+
+        const nodeData = (nd.nodes||[]).filter(n => connectedIds.has(n.id));
+        const nodeMap = {};
+        nodeData.forEach(n => { nodeMap[n.id] = n; });
+
+        const links = (nd.edges||[]).filter(e => nodeMap[e.from] && nodeMap[e.to])
+            .map(e => ({ source: e.from, target: e.to, label: e.label||'' }));
+
+        const colorMap = {
+            'jeffrey epstein': '#ef4444', 'bill gates': '#3b82f6', 'melinda gates': '#60a5fa',
+            'lawrence h. summers': '#f59e0b', 'larry summers': '#f59e0b',
+            'boris nikolic': '#a855f7', 'ehud barak': '#10b981', 'ghislaine maxwell': '#ec4899',
+            'lesley groff': '#f472b6', 'richard kahn': '#f97316', 'terje rod-larsen': '#14b8a6',
+            'leon d. black': '#6366f1', 'leon black': '#6366f1',
+        };
+        const colorFor = label => {
+            const lb = (label||'').toLowerCase();
+            for (const [k, c] of Object.entries(colorMap)) { if (lb.includes(k) || k.includes(lb)) return c; }
+            if (lb.includes('foundation') || lb.includes('ipi') || lb.includes('world bank') || lb.includes('microsoft')) return '#06b6d4';
+            return '#6366f1';
+        };
+
+        const nodes = nodeData.map(n => {
+            const ec = edgeCount[n.id] || 0;
+            const isCenter = n.label.toLowerCase().includes('epstein');
+            return {
+                id: n.id, label: n.label, title: n.title||'',
+                color: colorFor(n.label),
+                r: isCenter ? 28 : (ec >= 3 ? Math.min(22, 10 + ec * 2.5) : Math.max(6, 4 + ec * 2)),
+                ec, isCenter, showLabel: ec >= 2 || isCenter,
+                fontSize: isCenter ? 13 : (ec >= 3 ? 11 : 9)
+            };
+        });
+
+        const svg = d3.select(container).html('').append('svg')
+            .attr('width', W).attr('height', H)
+            .attr('viewBox', [0, 0, W, H]);
+
+        // Zoom
+        const g = svg.append('g');
+        svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', e => g.attr('transform', e.transform)));
+
+        // Arrow marker
+        svg.append('defs').append('marker')
+            .attr('id', 'arrowhead').attr('viewBox', '0 -5 10 10')
+            .attr('refX', 20).attr('refY', 0).attr('markerWidth', 5).attr('markerHeight', 5)
+            .attr('orient', 'auto')
+            .append('path').attr('d', 'M0,-4L10,0L0,4').attr('fill', '#ffffff30');
+
+        const link = g.append('g').selectAll('line').data(links).join('line')
+            .attr('class', 'link')
+            .attr('stroke', '#ffffff')
+            .attr('stroke-width', d => {
+                const imp = Math.min(edgeCount[d.source.id||d.source]||1, edgeCount[d.target.id||d.target]||1);
+                return imp > 2 ? 1.5 : 0.7;
+            })
+            .attr('marker-end', 'url(#arrowhead)');
+
+        const node = g.append('g').selectAll('g').data(nodes).join('g')
+            .attr('class', 'node')
+            .style('cursor', 'pointer');
+
+        node.append('circle')
+            .attr('r', d => d.r)
+            .attr('fill', d => d.color + (d.isCenter ? '40' : '20'))
+            .attr('stroke', d => d.color)
+            .attr('stroke-width', d => d.isCenter ? 3 : 1.5);
+
+        node.filter(d => d.showLabel).append('text')
+            .attr('class', 'node-label')
+            .attr('dy', d => d.r + 12)
+            .attr('font-size', d => d.fontSize)
+            .attr('font-weight', d => d.isCenter || d.ec >= 3 ? 700 : 400)
+            .text(d => d.label);
+
+        // Tooltip
+        const tooltip = d3.select(container).append('div')
+            .style('position','absolute').style('pointer-events','none').style('opacity',0)
+            .style('background','#111119').style('border','1px solid #2a2a42').style('border-radius','8px')
+            .style('padding','8px 12px').style('font-size','0.75rem').style('color','#eaeaf2')
+            .style('max-width','250px').style('line-height','1.5').style('box-shadow','0 4px 20px rgba(0,0,0,0.6)').style('z-index','10');
+
+        node.on('mouseover', (ev, d) => {
+            tooltip.html(`<strong style="color:${d.color}">${d.label}</strong><br>${d.title}<br><span style="color:#8888a4">${d.ec} connessioni</span>`)
+                .style('opacity', 1)
+                .style('left', (ev.offsetX + 15) + 'px')
+                .style('top', (ev.offsetY - 10) + 'px');
+        }).on('mouseout', () => tooltip.style('opacity', 0));
+
+        // Click: highlight neighbors
+        node.on('click', (ev, d) => {
+            ev.stopPropagation();
+            const nb = neighbors[d.id] || new Set();
+            node.classed('dimmed', n => n.id !== d.id && !nb.has(n.id));
+            link.classed('dimmed', l => l.source.id !== d.id && l.target.id !== d.id);
+        });
+        svg.on('click', () => {
+            node.classed('dimmed', false);
+            link.classed('dimmed', false);
+        });
+
+        // Drag
+        node.call(d3.drag()
+            .on('start', (ev, d) => { if (!ev.active) sim.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+            .on('drag', (ev, d) => { d.fx = ev.x; d.fy = ev.y; })
+            .on('end', (ev, d) => { if (!ev.active) sim.alphaTarget(0); d.fx = null; d.fy = null; })
+        );
+
+        // Simulation
+        const sim = d3.forceSimulation(nodes)
+            .force('link', d3.forceLink(links).id(d => d.id).distance(80))
+            .force('charge', d3.forceManyBody().strength(-200))
+            .force('center', d3.forceCenter(W / 2, H / 2))
+            .force('collision', d3.forceCollide().radius(d => d.r + 8))
+            .force('x', d3.forceX(W / 2).strength(0.05))
+            .force('y', d3.forceY(H / 2).strength(0.05))
+            .on('tick', () => {
+                link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+                node.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+    }
+
+    function evidence() {
+        const ev = D.analysis?.significant_evidence || [];
+        document.getElementById('evList').innerHTML = ev.map(e => `
+            <div class="card eitem">
+                <div class="emark">&#128196;</div>
+                <div class="econtent">
+                    <div class="eid">${eftaLink(e.document)}</div>
+                    <div class="equote">"${e.content}"</div>
+                    <div class="eimp">${e.importance}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function timeline() {
+        const ev = D.analysis?.timeline || [];
+        const sorted = [...ev].sort((a,b)=>{
+            const ya=(a.date||'').match(/(20\d{2})/), yb=(b.date||'').match(/(20\d{2})/);
+            return (ya?+ya[1]:0)-(yb?+yb[1]:0);
+        });
+        document.getElementById('tlList').innerHTML = sorted.map(e => `
+            <div class="tl-item">
+                <div class="tl-date">${e.date}</div>
+                <div class="tl-event">${e.event}</div>
+                <div class="tl-src">${eftaLink(e.source)}</div>
+            </div>
+        `).join('');
+    }
+
+    function redflags() {
+        const f = D.banking?.red_flags || [];
+        document.getElementById('rfGrid').innerHTML = f.map(x => `
+            <div class="card rfitem">
+                <div class="sev-dot ${x.severity}"></div>
+                <div>
+                    <div class="rf-text">${x.description}</div>
+                    <div class="rf-ev">${eftaLink(x.evidence)}</div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function patterns() {
+        const p = D.analysis?.patterns || [];
+        const ico = ['&#128269;','&#128200;','&#9888;','&#128274;','&#128161;','&#128202;','&#128270;','&#128203;','&#128276;','&#128640;','&#127760;','&#128373;'];
+        document.getElementById('patGrid').innerHTML = p.map((x,i) => `
+            <div class="card pat-item"><div class="pat-ico">${ico[i%ico.length]}</div><div class="pat-text">${x}</div></div>
+        `).join('');
+    }
+
+    function questions() {
+        const qs = D.follow_up?.critical_questions || [];
+        document.getElementById('qGrid').innerHTML = qs.map((q,i) => `
+            <div class="card qitem"><div class="qnum">${i+1}</div><div class="qtext">${q}</div></div>
+        `).join('');
+    }
+
+    function flightMap() {
+        const F = typeof FLIGHTS_DATA !== 'undefined' ? FLIGHTS_DATA : null;
+        if (!F) return;
+
+        const map = L.map('flightmap', { scrollWheelZoom: false, zoomControl: true, attributionControl: false }).setView([32, -40], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
+
+        const ap = F.airports;
+
+        // Draw top routes as curved lines
+        const maxCount = Math.max(...F.top_routes.map(r => r.count));
+        F.top_routes.forEach(route => {
+            const from = ap[route.from];
+            const to = ap[route.to];
+            if (!from || !to) return;
+            if (route.from === route.to) return;
+
+            const weight = Math.max(1, (route.count / maxCount) * 4);
+            const opacity = Math.max(0.15, (route.count / maxCount) * 0.6);
+
+            // Curved line using intermediate point
+            const midLat = (from.lat + to.lat) / 2;
+            const midLon = (from.lon + to.lon) / 2;
+            const dx = to.lon - from.lon;
+            const dy = to.lat - from.lat;
+            const offset = Math.sqrt(dx*dx + dy*dy) * 0.15;
+            const ctrlLat = midLat + (dx > 0 ? offset : -offset);
+            const ctrlLon = midLon - (dy > 0 ? offset : -offset);
+
+            // Build curve points
+            const pts = [];
+            for (let t = 0; t <= 1; t += 0.05) {
+                const lat = (1-t)*(1-t)*from.lat + 2*(1-t)*t*ctrlLat + t*t*to.lat;
+                const lon = (1-t)*(1-t)*from.lon + 2*(1-t)*t*ctrlLon + t*t*to.lon;
+                pts.push([lat, lon]);
+            }
+
+            L.polyline(pts, {
+                color: '#3b82f6',
+                weight: weight,
+                opacity: opacity,
+                smoothFactor: 1
+            }).addTo(map).bindPopup(`<strong>${from.name}</strong> &rarr; <strong>${to.name}</strong><br>${route.count} voli`);
+        });
+
+        // Draw Summers flights in red
+        F.summers_flights.forEach(fl => {
+            const from = ap[fl.from];
+            const to = ap[fl.to];
+            if (!from || !to || fl.from === fl.to) return;
+
+            const midLat = (from.lat + to.lat) / 2;
+            const midLon = (from.lon + to.lon) / 2;
+            const dx = to.lon - from.lon;
+            const dy = to.lat - from.lat;
+            const offset = Math.sqrt(dx*dx + dy*dy) * 0.2;
+            const ctrlLat = midLat + (dx > 0 ? offset : -offset);
+            const ctrlLon = midLon - (dy > 0 ? offset : -offset);
+
+            const pts = [];
+            for (let t = 0; t <= 1; t += 0.05) {
+                const lat = (1-t)*(1-t)*from.lat + 2*(1-t)*t*ctrlLat + t*t*to.lat;
+                const lon = (1-t)*(1-t)*from.lon + 2*(1-t)*t*ctrlLon + t*t*to.lon;
+                pts.push([lat, lon]);
+            }
+
+            L.polyline(pts, {
+                color: '#ef4444',
+                weight: 3,
+                opacity: 0.9,
+                dashArray: '8 4',
+                smoothFactor: 1
+            }).addTo(map).bindPopup(`<strong style="color:#ef4444">VOLO CON SUMMERS</strong><br>${fl.date}<br>${from.name} &rarr; ${to.name}<br><span style="color:#8888a4">${fl.passengers}</span>`);
+        });
+
+        // Airport markers
+        const usedAirports = new Set();
+        F.top_routes.forEach(r => { usedAirports.add(r.from); usedAirports.add(r.to); });
+        F.summers_flights.forEach(fl => { usedAirports.add(fl.from); usedAirports.add(fl.to); });
+
+        // Count flights per airport
+        const apCount = {};
+        F.top_routes.forEach(r => {
+            apCount[r.from] = (apCount[r.from]||0) + r.count;
+            apCount[r.to] = (apCount[r.to]||0) + r.count;
+        });
+
+        const summersAirports = new Set();
+        F.summers_flights.forEach(fl => { summersAirports.add(fl.from); summersAirports.add(fl.to); });
+
+        usedAirports.forEach(code => {
+            const a = ap[code];
+            if (!a) return;
+            const isSummers = summersAirports.has(code);
+            const count = apCount[code] || 0;
+            const sz = Math.max(6, Math.min(16, 6 + Math.sqrt(count) * 1.5));
+
+            const icon = L.divIcon({
+                className: '',
+                html: `<div style="width:${sz}px;height:${sz}px;background:${isSummers?'#ef4444':'#3b82f6'};border:2px solid ${isSummers?'#fca5a5':'#93c5fd'};border-radius:50%;box-shadow:0 0 ${isSummers?10:6}px ${isSummers?'rgba(239,68,68,0.6)':'rgba(59,130,246,0.4)'}"></div>`,
+                iconSize: [sz, sz],
+                iconAnchor: [sz/2, sz/2]
+            });
+
+            L.marker([a.lat, a.lon], { icon })
+                .addTo(map)
+                .bindPopup(`<strong>${a.name}</strong><br>${code}<br>${count} voli nelle rotte principali`);
+        });
+
+        // Legend
+        document.getElementById('flightLegend').innerHTML = `
+            <span><span style="display:inline-block;width:20px;height:3px;background:#3b82f6;vertical-align:middle;margin-right:4px"></span> Rotte principali (${F.total_flights} voli totali)</span>
+            <span><span style="display:inline-block;width:20px;height:3px;background:#ef4444;border-bottom:2px dashed #ef4444;vertical-align:middle;margin-right:4px"></span> Voli con Larry Summers (${F.summers_flights.length} voli)</span>
+            <span><span style="display:inline-block;width:8px;height:8px;background:#ef4444;border-radius:50%;vertical-align:middle;margin-right:4px"></span> Aeroporti Summers</span>
+            <span><span style="display:inline-block;width:8px;height:8px;background:#3b82f6;border-radius:50%;vertical-align:middle;margin-right:4px"></span> Altri aeroporti</span>
+        `;
+    }
+
+    function healthChains() {
+        const H = typeof RAG_HEALTH_DATA !== 'undefined' ? RAG_HEALTH_DATA : null;
+        if (!H) return;
+
+        // Key Facts - prominent display
+        if (H.key_facts && H.key_facts.length) {
+            const kfBox = document.getElementById('healthKeyFacts');
+            kfBox.innerHTML = H.key_facts.map(f => {
+                let docsHtml = '';
+                if (f.docs && f.docs.length) {
+                    docsHtml = `<div style="margin-top:0.6rem;display:flex;flex-wrap:wrap;gap:0.3rem">${f.docs.map(d => eftaLink(d)).join(' ')}</div>`;
+                }
+                let extHtml = '';
+                if (f.external_source) {
+                    extHtml = `<div style="margin-top:0.4rem"><a href="${f.external_source}" target="_blank" style="color:var(--orange);font-size:0.75rem;text-decoration:none;font-family:'JetBrains Mono',monospace">Fonte pubblica verificabile &#8599;</a></div>`;
+                }
+                return `<div style="background:linear-gradient(135deg,rgba(0,212,255,0.06),rgba(139,92,246,0.06));border:1px solid rgba(0,212,255,0.15);border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1rem">
+                    <div style="display:flex;align-items:flex-start;gap:1rem">
+                        <div style="font-size:1.8rem;flex-shrink:0;line-height:1">${f.icon}</div>
+                        <div style="flex:1">
+                            <h4 style="font-size:1rem;font-weight:700;margin-bottom:0.5rem;color:var(--cyan)">${f.title}</h4>
+                            <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7">${f.text}</p>
+                            ${docsHtml}${extHtml}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Chains - detailed evidence
+        const sevColors = {critica:'var(--red)',alta:'var(--orange)',media:'var(--blue)'};
+        const sevIcons = {critica:'&#9888;',alta:'&#128308;',media:'&#128313;'};
+        document.getElementById('healthList').innerHTML = H.chains.map((c,i) => `
+            <div class="card" style="border-left:3px solid ${sevColors[c.severity]||'var(--blue)'}">
+                <div style="display:flex;align-items:flex-start;gap:0.8rem">
+                    <div style="font-size:1.3rem;flex-shrink:0;margin-top:0.1rem">${sevIcons[c.severity]||'&#128313;'}</div>
+                    <div style="flex:1">
+                        <h4 style="font-size:0.9rem;font-weight:700;margin-bottom:0.3rem;color:${sevColors[c.severity]||'var(--text-primary)'}">${c.name}</h4>
+                        <p style="font-size:0.82rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0.4rem">${c.description}</p>
+                        <div style="display:flex;flex-wrap:wrap;gap:0.3rem">${c.docs.map(d => eftaLink(d)).join(' ')}</div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function report() {
+        let r = D.report || '';
+        // Remove PROSSIMI PASSI and VALUTAZIONE sections (shown separately)
+        r = r.replace(/## PROSSIMI PASSI[\s\S]*?(?=## |$)/, '');
+        r = r.replace(/## VALUTAZIONE[\s\S]*?(?=## |$)/, '');
+        let h = r
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        h = '<p>' + h + '</p>';
+        // Make EFTA codes clickable
+        h = h.replace(/(EFTA\d{8,})/g, (match) => {
+            const url = eftaUrl(match);
+            return `<a href="${url}" target="_blank" style="color:var(--cyan);text-decoration:none;font-family:JetBrains Mono;font-size:0.85em" title="Apri PDF su justice.gov">${match}</a>`;
+        });
+        document.getElementById('reportBox').innerHTML = h;
+    }
+
+    function valutazione() {
+        let r = D.report || '';
+        // Extract VALUTAZIONE section
+        const match = r.match(/## VALUTAZIONE([\s\S]*?)(?=## |$)/);
+        if (!match) return;
+        let val = match[1];
+        // Fix: update "89 documenti" to actual count
+        val = val.replace(/89 documenti EFTA/g, D.documents_found + ' documenti EFTA');
+        // Parse into structured blocks
+        const blocks = [];
+        const parts = val.split(/\*\*([^*]+)\*\*/g);
+        let html = '<div style="display:flex;flex-direction:column;gap:1.2rem">';
+
+        // Affidabilità card
+        html += `<div style="background:linear-gradient(135deg,rgba(34,197,94,0.08),rgba(0,212,255,0.05));border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:1.4rem">
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">
+                <span style="font-size:1.5rem">&#9989;</span>
+                <h3 style="color:#22c55e;font-size:1.1rem;margin:0">AFFIDABILIT&Agrave;: ALTA</h3>
+            </div>
+            <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.7">Le prove si basano su <strong style="color:var(--cyan)">${D.documents_found || 335} documenti EFTA</strong> diretti con comunicazioni email autentiche, registrazioni di visite ufficiali, accordi legali firmati, budget dettagliati IPI-Gates Foundation, e documentazione di meeting formali. La coerenza tra fonti multiple, comunicazioni bidirezionali, e presenza di documenti operativi conferma l'autenticit&agrave;.</p>
+        </div>`;
+
+        // Impatto card
+        html += `<div style="background:linear-gradient(135deg,rgba(239,68,68,0.08),rgba(249,115,22,0.05));border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:1.4rem">
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">
+                <span style="font-size:1.5rem">&#9888;&#65039;</span>
+                <h3 style="color:var(--red);font-size:1.1rem;margin:0">IMPATTO: CRITICO PER SICUREZZA SANITARIA GLOBALE</h3>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.8rem">
+                ${[
+                    ['Operazioni Gates Foundation','Influenza esterna non dichiarata su finanziamenti multimilionari e decisioni global health policy'],
+                    ['Campagne Polio Globali','Uso per operazioni intelligence in zone di conflitto con negoziazioni segrete con gruppi terroristici'],
+                    ['Pandemic Preparedness','Finanziamenti paralleli che creavano conflitti di interesse non dichiarati in istituzioni chiave'],
+                    ['Distribuzione Vaccini Globale','Potenziale influenza su GAVI-COVAX attraverso strutture offshore non trasparenti'],
+                    ['Biosorveglianza Globale','Accesso privilegiato a reti monitoraggio virale in Africa Centrale e intelligence biologica'],
+                    ['Media Health Narrative','Manipolazione informazione pubblica su global health policy attraverso fonti privilegiate'],
+                    ['Consulenze Governative Sanitarie','Commercializzazione expertise pubblico per profitti privati in operazioni sanitarie']
+                ].map(([t,d]) => `<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:0.8rem">
+                    <strong style="color:var(--orange);font-size:0.82rem">${t}</strong>
+                    <p style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.3rem;line-height:1.5">${d}</p>
+                </div>`).join('')}
+            </div>
+        </div>`;
+
+        // Benefici card
+        html += `<div style="background:linear-gradient(135deg,rgba(139,92,246,0.08),rgba(0,212,255,0.05));border:1px solid rgba(139,92,246,0.25);border-radius:12px;padding:1.4rem">
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">
+                <span style="font-size:1.5rem">&#128373;</span>
+                <h3 style="color:var(--purple);font-size:1.1rem;margin:0">BENEFICI PER EPSTEIN NEL SISTEMA SANITARIO GLOBALE</h3>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.8rem">
+                ${[
+                    ['Credibilit&agrave; Istituzionale Sanitaria','Partnership con Gates Foundation legittimava operazioni presso governi e organizzazioni sanitarie internazionali per progetti in zone sensibili'],
+                    ['Accesso Global Health Elite','Network includeva Gates Foundation, GAVI Alliance, Columbia University, Global Viral Forecasting, e JPMorgan Global Health Investment Fund'],
+                    ['Intelligence Sanitaria Privilegiata','Informazioni anticipate su operazioni polio in zone di conflitto, pandemic preparedness, e negoziazioni segrete con gruppi terroristici'],
+                    ['Revenue Streams Sanitari','Consulenze attraverso IPI per operazioni in Afghanistan-Pakistan-Nigeria-Somalia con budget milionari sotto copertura sanitaria'],
+                    ['Influenza Biosorveglianza','Accesso a reti monitoraggio virale globale attraverso Nathan Wolfe e connessioni con tecnologie diagnostiche mediche']
+                ].map(([t,d]) => `<div style="background:rgba(0,0,0,0.2);border-radius:8px;padding:0.8rem">
+                    <strong style="color:var(--cyan);font-size:0.82rem">${t}</strong>
+                    <p style="font-size:0.78rem;color:var(--text-secondary);margin-top:0.3rem;line-height:1.5">${d}</p>
+                </div>`).join('')}
+            </div>
+        </div>`;
+
+        // Conclusione card
+        html += `<div style="background:linear-gradient(135deg,rgba(249,115,22,0.1),rgba(239,68,68,0.08));border:2px solid rgba(249,115,22,0.3);border-radius:12px;padding:1.4rem">
+            <div style="display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem">
+                <span style="font-size:1.5rem">&#128203;</span>
+                <h3 style="color:var(--orange);font-size:1.1rem;margin:0">CONCLUSIONE</h3>
+            </div>
+            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.8">La rete Epstein emerge come <strong style="color:var(--red)">sistema operativo sofisticato</strong> che aveva penetrato non solo il sistema finanziario e politico americano, ma anche <strong style="color:var(--red)">l'infrastruttura sanitaria globale</strong>. Attraverso Gates Foundation, IPI, GAVI, e istituzioni accademiche, il network monetizzava accesso privilegiato a operazioni sanitarie in zone di conflitto, intelligence biologica, e pandemic preparedness.</p>
+            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.8;margin-top:0.6rem">Il sistema utilizzava campagne sanitarie come copertura per operazioni intelligence, negoziazioni con gruppi terroristici, e consulenze commerciali multimilionarie, compromettendo l'integrit&agrave; delle istituzioni sanitarie globali e potenzialmente la sicurezza sanitaria internazionale.</p>
+        </div>`;
+
+        html += '</div>';
+        document.getElementById('valBox').innerHTML = html;
+    }
+
+    init();
+    </script>
+</body>
+</html>
