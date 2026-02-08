@@ -161,7 +161,7 @@
         #netbox .node.dimmed text { opacity: 0.08; }
 
         /* ===== PEOPLE ===== */
-        .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.8rem; }
+        .pgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr)); gap: 0.8rem; }
         .pcard { display: flex; gap: 0.8rem; }
         .pavatar {
             width: 40px; height: 40px; border-radius: 10px;
@@ -218,14 +218,14 @@
         .tl-src a:hover { text-decoration: underline; }
 
         /* ===== BANKING ===== */
-        .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 0.8rem; }
+        .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr)); gap: 0.8rem; }
         .txn-amount { font-family: 'JetBrains Mono',monospace; font-size: 1.2rem; font-weight: 700; color: var(--red); }
         .txn-entities { font-size: 0.8rem; color: var(--text-secondary); margin: 0.4rem 0; }
         .txn-entities strong { color: var(--text-primary); }
         .susp-badge { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; padding: 0.15rem 0.5rem; border-radius: 4px; background: rgba(239,68,68,0.1); color: var(--red); }
 
         /* ===== RED FLAGS ===== */
-        .rfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 0.8rem; }
+        .rfgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); gap: 0.8rem; }
         .rfitem { display: flex; gap: 0.8rem; align-items: flex-start; }
         .sev-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 0.45rem; }
         .sev-dot.alta { background: var(--red); box-shadow: 0 0 6px rgba(239,68,68,0.5); }
@@ -234,19 +234,19 @@
         .rf-ev { font-size: 0.68rem; font-family: 'JetBrains Mono',monospace; color: var(--cyan); margin-top: 0.15rem; }
 
         /* ===== PATTERNS ===== */
-        .patgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 0.6rem; }
+        .patgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(350px, 100%), 1fr)); gap: 0.6rem; }
         .pat-item { display: flex; gap: 0.7rem; padding: 0.9rem 1rem; }
         .pat-ico { font-size: 1rem; flex-shrink: 0; }
         .pat-text { font-size: 0.8rem; color: var(--text-secondary); line-height: 1.5; }
 
         /* ===== QUESTIONS ===== */
-        .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 0.6rem; }
+        .qgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 0.6rem; }
         .qitem { display: flex; gap: 0.8rem; }
         .qnum { width: 28px; height: 28px; border-radius: 7px; background: rgba(139,92,246,0.1); color: var(--purple); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; flex-shrink: 0; }
         .qtext { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
 
         /* ===== INCONSISTENCIES ===== */
-        .inc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 0.6rem; }
+        .inc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(420px, 100%), 1fr)); gap: 0.6rem; }
         .inc-item { display: flex; gap: 0.7rem; }
         .inc-ico { color: var(--orange); font-size: 0.9rem; flex-shrink: 0; margin-top: 0.2rem; }
         .inc-text { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; }
@@ -310,13 +310,25 @@
             .pgrid,.bgrid,.rfgrid,.patgrid { grid-template-columns: 1fr; }
             section { padding: 3rem 1rem; }
             #netbox { max-height: 350px; }
+            #mapbox, #flightmap { height: 350px; }
             .sbar-label { width: 100px; font-size: 0.62rem; }
             .stats-row { gap: 1rem; }
             .stat-num { font-size: 1.6rem; }
+            .report-box { padding: 1rem; font-size: 0.82rem; }
+            .chart-card canvas { max-height: 200px; }
         }
         @media(max-width:480px) {
             .hero h1 { font-size: 1.7rem; }
             .stats-row { flex-direction: column; align-items: center; }
+            #mapbox, #flightmap { height: 280px; }
+            .sbar-label { width: 70px; font-size: 0.58rem; }
+            .sbar-val { width: 40px; font-size: 0.6rem; }
+            .hero { padding: 4rem 1rem 3rem; min-height: auto; }
+            .badge { font-size: 0.6rem; padding: 0.3rem 0.7rem; }
+            .hero .subtitle { font-size: 0.9rem; }
+            .report-box { padding: 0.8rem; }
+            .report-box h1 { font-size: 1.1rem; }
+            .report-box h2 { font-size: 0.95rem; }
         }
     </style>
 </head>
@@ -581,8 +593,17 @@
         patterns();
         questions();
         valutazione();
-        // Intersection observer
-        const obs = new IntersectionObserver(es => es.forEach(e => { if(e.isIntersecting) e.target.classList.add('vis'); }), {threshold:0.08});
+        // Intersection observer with Leaflet invalidateSize fix
+        const obs = new IntersectionObserver(es => es.forEach(e => {
+            if(e.isIntersecting) {
+                e.target.classList.add('vis');
+                // Fix Leaflet maps rendering when section becomes visible
+                e.target.querySelectorAll('.leaflet-container').forEach(m => {
+                    const map = m._leaflet_map;
+                    if (map) setTimeout(() => map.invalidateSize(), 300);
+                });
+            }
+        }), {threshold:0.02, rootMargin:'50px'});
         document.querySelectorAll('.fi').forEach(el => obs.observe(el));
         // Mobile nav close
         document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', () => document.querySelector('.nav-links').classList.remove('open')));
@@ -689,9 +710,9 @@
         const cols = ['#ef4444','#f59e0b','#3b82f6','#8b5cf6','#10b981','#06b6d4'];
         document.getElementById('finFlows').innerHTML = flows.map((f,i) => `
             <div style="margin-bottom:0.6rem">
-                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.2rem">
-                    <span style="font-size:0.75rem;color:var(--text-secondary)">${f.from} &rarr; ${f.to}</span>
-                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;color:${cols[i%cols.length]}">${f.label}</span>
+                <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:0.2rem;flex-wrap:wrap;gap:0.2rem">
+                    <span style="font-size:0.75rem;color:var(--text-secondary);min-width:0;word-break:break-word">${f.from} &rarr; ${f.to}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;font-weight:700;color:${cols[i%cols.length]};flex-shrink:0">${f.label}</span>
                 </div>
                 <div class="sbar-track"><div class="sbar-fill" style="width:${f.amount/mx*100}%;background:${cols[i%cols.length]}"></div></div>
                 <div style="display:flex;justify-content:space-between;margin-top:0.15rem">
@@ -743,6 +764,7 @@
             zoomControl: true,
             attributionControl: false
         }).setView([30, -10], 2);
+        document.getElementById('mapbox')._leaflet_map = map;
 
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 18
@@ -944,6 +966,26 @@
                     .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
                 node.attr('transform', d => `translate(${d.x},${d.y})`);
             });
+
+        // Resize handler for mobile orientation changes
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                const newW = container.clientWidth;
+                const newH = Math.min(560, Math.max(400, newW * 0.45));
+                container.style.height = newH + 'px';
+                svg.attr('width', newW).attr('height', newH).attr('viewBox', [0, 0, newW, newH]);
+                sim.force('center', d3.forceCenter(newW / 2, newH / 2));
+                sim.force('x', d3.forceX(newW / 2).strength(0.05));
+                sim.force('y', d3.forceY(newH / 2).strength(0.05));
+                sim.alpha(0.3).restart();
+                // Also invalidate Leaflet maps on resize
+                document.querySelectorAll('.leaflet-container').forEach(m => {
+                    if (m._leaflet_map) m._leaflet_map.invalidateSize();
+                });
+            }, 250);
+        });
     }
 
     function evidence() {
@@ -1008,6 +1050,7 @@
         if (!F) return;
 
         const map = L.map('flightmap', { scrollWheelZoom: false, zoomControl: true, attributionControl: false }).setView([32, -40], 3);
+        document.getElementById('flightmap')._leaflet_map = map;
         L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 }).addTo(map);
 
         const ap = F.airports;
@@ -1216,7 +1259,7 @@
                 <span style="font-size:1.5rem">&#9888;&#65039;</span>
                 <h3 style="color:var(--red);font-size:1.1rem;margin:0">IMPATTO: CRITICO PER SICUREZZA SANITARIA GLOBALE</h3>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.8rem">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:0.8rem">
                 ${[
                     ['Operazioni Gates Foundation','Influenza esterna non dichiarata su finanziamenti multimilionari e decisioni global health policy'],
                     ['Campagne Polio Globali','Uso per operazioni intelligence in zone di conflitto con negoziazioni segrete con gruppi terroristici'],
@@ -1238,7 +1281,7 @@
                 <span style="font-size:1.5rem">&#128373;</span>
                 <h3 style="color:var(--purple);font-size:1.1rem;margin:0">BENEFICI PER EPSTEIN NEL SISTEMA SANITARIO GLOBALE</h3>
             </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0.8rem">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(280px,100%),1fr));gap:0.8rem">
                 ${[
                     ['Credibilit&agrave; Istituzionale Sanitaria','Partnership con Gates Foundation legittimava operazioni presso governi e organizzazioni sanitarie internazionali per progetti in zone sensibili'],
                     ['Accesso Global Health Elite','Network includeva Gates Foundation, GAVI Alliance, Columbia University, Global Viral Forecasting, e JPMorgan Global Health Investment Fund'],
